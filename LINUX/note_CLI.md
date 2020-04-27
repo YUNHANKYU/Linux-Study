@@ -1,0 +1,179 @@
+# Linux CLI command
+
+Linux CLI command summary  
+
+## tail
+
+    $ tail 파일명 -F  
+    : 파일의 값 수정시, cli 창에서 실시간 확인  
+    : 보통 디버깅 시 사용.  
+    (-f: 파일이 지워지고 새로 생길 때는 반영 안함)  
+
+## wc
+
+    $ wc 파일명 
+    : 파일의 라인, 단어 수, 크기 파악. 
+    : 파일명을 여러개 사용하면 합한 크기 파악. 
+    (ex, /etc/passwd  경우, 몇개 pw가 있는지 파악) 
+    wc -l 파일명: 줄번호만 필요한 경우 사용   
+
+## nl
+
+    $ nl -ba 파일명 
+    : 공백을 포함한 라인넘버 출력. 
+    $ cat/head/tail | nl 
+    : 필요한 부분의 라인넘버 함께 출력 
+    (nl 파일명: 공백을 제외한 라인넘버 출력)  
+
+## sort
+
+    $ sort 파일명 
+    : 가장 첫글자 기준 오름차순 정렬. 
+    : 앞글자가 더 크므로 91 > 123 
+    $ ls -al | sort -k 5,5 
+    : 파일 크기 순으로 오름차순 
+    $ cat /etc/passwd | sort -t: -k 3,3 -n 
+    : ':' 기준으로 3,3기준으로(세번째 열) 정렬. 
+    : -t는 기준 설정, -k는 몇번째 칼럼인지 설정 
+    : -n은 숫자변환 후 정렬. 123 > 91 
+    $ cat /etc/passwd | sort -t: -k 3,3 -n --debug 
+    : 어떤 기준으로 정렬된지 보여줌 
+    $ ls -al /etc | head -n 20 | sort -k 5,5 -n 
+    : 파일의 크기 기준으로 정렬 
+    $ sort /etc/passwd | sort -t: -k 3,3 -k 1,1 -n 
+    : 세번째 열 기준으로 정렬 후 첫번째 기준으로 
+    : 숫자가 같은 경우, 그 다음 세부 옵션 선택 
+
+## uniq
+
+    $ uniq 파일명 
+    : 중복된 애들 출력 안함. 연속적인 애들만 처리 
+    $ sort 파일명 | uniq | nl
+    : 따라서, sort와 같이 사용하는 것이 유리
+    : -i 대소문자 구분x, -d 중복된 내용만 출력
+    $ grep 찾을문자 *.c | awk -F: '{print $1}' | uniq
+    : 찾을 문자가 있는 c파일들 중복되지 않게 출력
+    : 해당 헤더파일 사용 안하는 애들 고를 때 쓸 수 있겠다
+
+## cut
+
+    $ cut -d ' ' -f 1
+    : ' '를 기준으로 첫 번쨰 요소
+    $ wc -l /etc/passwd | cut -d ' ' -f 1
+    : 파일의 줄번호만 추출. f는 필드. 첫번째 필드만 추출
+    $ head /etc/passwd | cut -d : -f 1
+    : passwd파일의 열줄만 :기준으로 자른 첫번째 필드 추출
+    $ head /etc/passwd | cut -d : -f 1,2
+    : 해당하는 인덱스의 필드 추출
+    $ head /etc/passwd | cut -d ':' -f 1,7 --output-delimiter="="
+    : 출력할 때, ':'를 '='으로 바꾸어 출력
+    $ ls -al | tail -n -2 | cut -b 2-10
+    : 권한과 같은 파일의 속성을 추출할 때 사용. (tail: total 제외시)
+    : b는 바이트로, 글자 수 의미
+    $ ls -al | tail -n -2 | cut -b -10 
+    : 처음부터 10까지
+    $ ls -al | tail -n -2 | cut -b 11-
+    : 11부터 끝까지
+
+## tr
+
+    $ head /etc/passwd | tr -d ':'
+    : ':'를 출력하지 않겠다.
+    $ head /etc/passwd | tr ':' '%'
+    : ':'를 '%'로 바꾸어 출력하겠다.
+    $ head /etc/passwd | tr [:lower:] [:upper:]
+    : 모든 소문자를 모든 대문자로 바꾼다.
+
+## sed
+
+    $ head /etc/passwd | sed -n '2,5p'
+    : 2~5번째 줄만 출력. -n은 중복출력 방지.
+    $ head /etc/passwd | sed '1,5d'
+    : 1~5번째 줄을 지워라. 
+    $ head /etc/passwd | sed -n '/games/p'
+    : /안에 있는 있는 애를 가지고 있으면 출력
+    $ head /etc/passwd | sed '/news/d'
+    : ':'가 들어있는 줄 모두 지우기
+    $ head /etc/passwd | sed 's/root/ROOT/'
+    : substitute 옵션 사용해서 root만 바꾸기
+    $ head /etc/passwd | sed -n '/daemon/,10p'
+    : daemon이 들어가는 라인부터 10번째 줄까지 출력
+    $ head /etc/passwd | sed -n '/daemon/,+2p'
+    : daemon이 들어가는 라인부터 두줄 더 출력
+
+## awk
+
+    $ wc /etc/password | awk '{ print $1 }'
+    : wc를 통해 출력할 수 있는 첫 번째 필드인 줄번호 출력
+    : awk 입장에서는 공백이 delimeter
+    $ head /etc/passwd | awk -F ':' '{ print $1 }'
+    : fild seperator를 :으로 지정하기
+    $ head /etc/passwd | awk -F '/sy/ { print $1 }'
+    : /안에 있는 문자를 가진 줄의 첫 번째 필드 추출
+    $ head /etc/passwd | awk -F '/sy/ { print NR, $1 }'
+    : NR 위의 조건 그대로 출력하되, 줄 번호 함께 출력
+    : , 쓰면 띄어쓰기 됨
+    $ head /etc/passwd | awk -F '/sy/ { print NR "==>" $1 }'
+    : 꾸미기 가능. 줄번호 뒤에 ==>를 붙여서 출력
+    $ head /etc/passwd | awk -F '{ print $1, NF}'
+    : NF 필드의 개수를 함께 출력
+
+## find
+
+    $ find . | grep 찾을문자
+    : 찾을 문자가 있는 폴더 혹은 파일 위치 추출
+    $ find 'pwd' -name "*.cpp$"
+    : 절대경로 기준으로 cpp 스크립트 모두 추출. $는 문장마침
+    $ find 'pwd' -regextype egrep -regx '*.cpp$'
+    $ find . -empty
+    : 빈 폴더 찾기
+    $ find . -type f
+    : 일반 파일 찾기 d는 폴더 찾기
+    $ find . -perm 0777 | wc -l
+    : permission이 0777인 애들이 몇갠지 찾을 때 사용
+    $ find . -perm /u+x -ls
+    : 유저에게 실행권한이 있는 파일 및 폴더 출력
+    : /는 찾는 표현이므로 /001과 같이도 사용 가능
+    $ find . -name "*.cpp" -exec stat {} \;
+    : -exec 사용시 커맨드를 줄 수 있는데 이는 \;으로 마쳐야함
+    : 찾고자하는 모든 파일에 stat 명령어를 적용시킴
+    : -execdir 사용시 찾은애가 있는 폴더로 들어가서 작업수행
+    $ find . -name "*.cpp" -ok rm -f {} \;
+    : exec과 같이 커맨드를 사용하되, 사용전 질문을 함.
+    $ find . ! -name 파일명 -delete
+    : 해당파일을 제외하고 삭제
+
+## grep
+
+    $ grep vector *.cpp | awk -F '{ print $1 }' | sort - u
+    : vector가 들어간 파일명만 추출.
+    : sort -u 하므로써 중복 삭제 (unique)
+    $ grep vector *.cpp -q
+    $ echo $?
+    : vector라는 요소가 있는 cpp 파일이 있는지 확인 (quite)
+    $ grep "\<찾을문자\>" *.cpp
+    : 앞뒤에 다른 문자가 붙지 않고 단어 단위로 된 애들을 찾기.
+    : ex) for를 찾을 때, fork는 나오지 않도록 하고 싶을 때.
+    $ grep "^\<int\>.*(.*)" *.cpp
+    : 자료형이 int인 모든 함수 찾기. 와일드카드, .*
+    : ^는 이 후의 문자들로 시작하는 문자열 찾기
+    $ grep "std;$" *.cpp
+    : $는 이 앞의 문자를 치면 문자가 끝나는 애들
+
+## apropos
+
+    $ apropos 함수
+    : 함수에 대한 설명
+    $ apropos 함수 -s 3
+    : 3번 섹션에 대한 command를 보여줌
+
+## which
+
+    $ which ls
+    : ls 명령어가 어디있는지.
+    $ which PATH  
+
+## stat
+
+    $ stat 파일명
+    : 파일에 대한 구체적인 통계 정보. 
